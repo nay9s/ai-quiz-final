@@ -1,0 +1,86 @@
+const assert = require('node:assert/strict');
+const path = require('node:path');
+const { chromium } = require('playwright');
+const root = path.resolve(__dirname, '..');
+const url = 'file:///' + root.replaceAll('\\', '/') + '/index.html';
+
+(async () => {
+  const browser = await chromium.launch({channel:process.env.QUIZ_TEST_BROWSER || 'msedge',headless:true});
+  const errors = [];
+  const setup = async (options = {}) => {
+    const page = await browser.newPage(options);
+    page.on('pageerror', (e) => errors.push(e.message));
+    page.on('dialog', (d) => d.accept());
+    await page.goto(url);
+    await page.waitForFunction(() => document.querySelectorAll('#chapterGrid input').length === 6);
+    return page;
+  };
+  try {
+    const page = await setup({viewport:{width:390,height:844}});
+    assert.match(await page.textContent('#selectionSummary'), /1 บท · 9 ข้อ/);
+    await page.click('#clearAll'); assert.equal(await page.locator('#start').isDisabled(),true);
+    await page.locator('#chapterGrid input').nth(4).check();
+    await page.click('#examMode'); await page.click('#start');
+    await page.locator('#blog-question-0 [data-blog-option="0"]').click();
+    await page.locator('#blog-question-0 [data-flag-question]').click();
+    await page.locator('[data-open-question]').fill('คำตอบปลายเปิดที่อยากเก็บไว้');
+    await page.click('#quit');
+    assert.equal(await page.locator('#resumeCard').isVisible(),true);
+    await page.reload(); await page.waitForFunction(() => !document.getElementById('resumeCard').classList.contains('hidden'));
+    await page.click('#resumeQuiz');
+    assert.equal(await page.locator('[data-open-question]').inputValue(),'คำตอบปลายเปิดที่อยากเก็บไว้');
+    assert.equal(await page.evaluate(() => session.answers[0].selected),0);
+    assert.equal(await page.evaluate(() => session.flags[0]),true);
+    await page.click('#flaggedCount'); assert.equal(await page.locator('[data-map-index]').count(),1);
+    await page.locator('[data-map-index]').click();
+    assert.equal(await page.evaluate(() => session.index),0);
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),true);
+    // A completed set removes the unfinished session and preserves summary/retry behavior.
+    await page.evaluate(() => { session.questions.forEach((q,i) => {if(q.type !== 'open') session.answers[i] = {selected: i === 0 ? (q.answer + 1) % q.options.length : q.answer};}); });
+    await page.click('#next');
+    assert.equal(await page.textContent('#resultScore'),'89%');
+    assert.equal(await page.evaluate(() => localStorage.getItem(progressKey)),null);
+    assert.equal(await page.locator('.chapter-result').count(),1);
+    await page.click('#retryWrong');
+    assert.equal(await page.evaluate(() => session.questions.length),1);
+    assert.equal(await page.evaluate(() => session.questions[0].id),'generative-ai-1');
+    assert.equal(await page.evaluate(() => session.revealBeforeNext),true);
+    assert.equal(await page.evaluate(() => session.answers[0]),null);
+    await page.locator('[data-flag-question]').first().click();
+    await page.locator('[data-blog-option="0"]').click();
+    await page.locator('[data-blog-check]').click();
+    await page.click('#next');
+    await page.click('#retryFlagged'); assert.equal(await page.evaluate(() => session.questions.length),1);
+    await page.screenshot({path:path.join(root,'tests','learner-mobile.png'),fullPage:false});
+    // Shuffled options, checked state and bookmark survive reload in paged mode.
+    const paged = await setup();
+    await paged.click('#openSettings'); await paged.locator('.display-mode-segmented label').first().click();
+    await paged.locator('#modalShuffleOptions').check({force:true}); await paged.click('#saveSettings'); await paged.click('#start');
+    const options = await paged.evaluate(() => session.questions[0].options);
+    await paged.locator('#options .option').first().click(); await paged.click('#next');
+    await paged.click('#flagCurrent'); await paged.reload(); await paged.waitForFunction(() => !document.getElementById('resumeCard').classList.contains('hidden'));
+    await paged.click('#resumeQuiz');
+    assert.deepEqual(await paged.evaluate(() => session.questions[0].options),options);
+    assert.equal(await paged.evaluate(() => session.answers[0].checked),true);
+    assert.equal(await paged.locator('#flagCurrent').getAttribute('aria-pressed'),'true');
+    await paged.click('#remainingCount'); assert.equal(await paged.evaluate(() => session.index),1);
+    await paged.click('#questionMap'); assert.equal(await paged.locator('[data-map-index]').count(),9);
+    await paged.locator('[data-map-index="3"]').click(); assert.equal(await paged.evaluate(() => session.index),3);
+    // Expired timed exams submit saved answers; pausing does not reset the deadline.
+    const timed = await setup(); await timed.click('#examMode'); await timed.selectOption('#examMinutes','10'); await timed.click('#start');
+    assert.equal(await timed.locator('#sessionClock').isVisible(),true);
+    const deadline = await timed.evaluate(() => session.deadline);
+    await timed.click('#quit'); await timed.click('#resumeQuiz'); assert.equal(await timed.evaluate(() => session.deadline),deadline);
+    await timed.evaluate(() => { session.deadline = Date.now() - 1; });
+    await timed.waitForFunction(() => !document.getElementById('result').classList.contains('hidden'));
+    assert.match(await timed.textContent('#resultMessage'), /ครบเวลา/);
+    assert.equal(await timed.evaluate(() => localStorage.getItem(progressKey)),null);
+    // Dataset changes invalidate a saved attempt instead of grading against a changed key.
+    const stale = await setup(); await stale.click('#start'); await stale.click('#quit');
+    await stale.evaluate(() => { const saved = JSON.parse(localStorage.getItem(progressKey)); saved.sourceSignature = 'older-dataset'; localStorage.setItem(progressKey,JSON.stringify(saved)); });
+    await stale.reload(); await stale.waitForFunction(() => document.querySelectorAll('#chapterGrid input').length === 6);
+    assert.equal(await stale.locator('#resumeCard').isVisible(),false);
+    assert.deepEqual(errors,[]);
+    console.log('PASS: selection, resume/open answers, bookmarks/map, wrong/flagged retries, chapter scores, shuffled/checked restoration, timed exams, stale data, mobile layout');
+  } finally { await browser.close(); }
+})().catch((e) => {console.error(e);process.exitCode=1;});

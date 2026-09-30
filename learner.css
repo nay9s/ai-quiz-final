@@ -1,0 +1,136 @@
+.learner-app { --accent: #42634f; --accent-soft: #edf4ee; background: #f6f7f4; }
+html:has(.learner-app) { scroll-padding-top: 190px; scroll-padding-bottom: 170px; }
+.learner-app .blog-card-actions button { scroll-margin-bottom: 160px; }
+[data-theme="dark"] .learner-app { --accent: #a6cfad; --accent-soft: #202e24; background: var(--bg); }
+.learner-app .wrap { max-width: 1040px; padding-bottom: 170px; }
+.learner-app .brand h1 { font-size: 30px; font-weight: 600; }
+.learner-app .panel { border-radius: 24px; box-shadow: 0 8px 32px rgba(20,35,25,.035); }
+.learner-app #home { padding: 32px; }
+.learner-app .eyebrow { color: var(--accent); font-size: 12px; font-weight: 600; }
+.learner-app .home-intro { margin-bottom: 24px; }
+.learner-app .home-intro h2 { margin: 10px 0 8px; font-size: clamp(25px, 4vw, 34px); font-weight: 600; }
+.learner-app .home-intro p, .section-heading p { color: var(--muted); margin: 0; font-size: 14px; }
+.learner-app .stats { margin-bottom: 32px; gap: 12px; }
+.learner-app .stat { padding: 18px; border-radius: 16px; background: var(--surface-2); box-shadow: none; }
+.learner-app .stat b { font-size: 27px; font-weight: 600; }
+.section-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin: 26px 0 18px; }
+.learner-app .section-heading h2 { font-size: 21px; margin: 0 0 4px; font-weight: 600; }
+.selection-pill { flex-shrink: 0; padding: 6px 12px; background: var(--accent-soft); color: var(--accent); border-radius: 999px; font-size: 13px; }
+.learner-app #chapterGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.learner-app .chapter { border-radius: 16px; padding: 20px 16px; box-shadow: none; min-width: 0; }
+.learner-app .chapter:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); color: var(--text); }
+.learner-app .chapter:has(input:checked) small { color: var(--muted); }
+.learner-app .chapter b { font-size: 15px; font-weight: 600; line-height: 1.55; }
+.learner-app .chapter input { accent-color: var(--accent); }
+.study-mode-picker { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 26px; }
+.mode-card { display: flex; align-items: center; gap: 12px; padding: 17px; text-align: left; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); color: var(--text); cursor: pointer; }
+.mode-card b, .mode-card small { display: block; }
+.mode-card b { font-weight: 600; }
+.mode-card small { color: var(--muted); font-size: 12px; margin-top: 4px; }
+.mode-card[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); }
+.mode-icon { width: 36px; height: 36px; flex-shrink: 0; display: grid; place-items: center; border-radius: 12px; background: var(--surface-2); font-size: 24px; color: var(--accent); }
+.exam-time { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; font-size: 13px; margin-top: 16px; }
+.exam-time select { font: inherit; color: var(--text); background: var(--surface); padding: 8px 12px; border: 1px solid var(--line); border-radius: 10px; }
+.exam-time span { color: var(--muted); }
+.learner-app .home-actions { margin-top: 26px; padding-top: 22px; border-top: 1px solid var(--line); }
+.home-footnote { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-top: 24px; color: var(--muted); font-size: 12px; }
+.home-footnote a { color: var(--muted); text-underline-offset: 4px; }
+.resume-card { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 22px; background: var(--accent-soft); border: 1px solid color-mix(in srgb, var(--accent) 25%, var(--line)); border-radius: 18px; }
+.resume-card h3 { margin: 6px 0; font-size: 18px; font-weight: 600; }
+.resume-card p { font-size: 13px; color: var(--muted); margin: 0; }
+.resume-actions { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
+.learner-app #quiz { overflow: visible; border: 0; background: transparent; box-shadow: none; backdrop-filter: none; filter: none; transform: none; }
+.learner-app .quiz-topbar { position: sticky; top: 10px; z-index: 30; padding: 22px 24px 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 20px; box-shadow: 0 8px 24px rgba(20,35,25,.04); }
+.learner-app .quiz-chapter-title { font-size: 20px; font-weight: 600; }
+.learner-app .quiz-topbar .bar { margin-top: 14px; height: 5px; }
+.learner-app .quiz-topbar .bar span { background: var(--accent); }
+.session-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 13px; }
+.progress-chip { border: 1px solid var(--line); border-radius: 999px; padding: 5px 10px; font-size: 12px; font-weight: 400; background: var(--surface-2); color: var(--text); }
+button.progress-chip { cursor: pointer; }
+button.progress-chip:hover { border-color: var(--accent); }
+button.progress-chip:disabled { opacity: .55; cursor: default; }
+.text-action { padding: 5px 4px; font-size: 12px; border: 0; background: transparent; color: var(--accent); cursor: pointer; margin-left: auto; }
+.session-clock { padding: 4px 9px; border-radius: 8px; font-size: 14px; font-variant-numeric: tabular-nums; background: var(--accent-soft); color: var(--accent); }
+.session-clock.time-low { color: var(--bad); }
+.learner-app .quiz-content { padding: 0; }
+.learner-app .chapter-tabs-wrap { background: transparent; padding: 16px 0 0; }
+.learner-app .chapter-tab { background: var(--surface); max-width: 280px; }
+.learner-app .chapter-tab.active { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+.learner-app .blog-question-card, .learner-app .question-card { background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 26px; box-shadow: none; }
+.learner-app .blog-question-card { scroll-margin-top: 190px; }
+.learner-app .blog-question-title, .learner-app .qtitle { font-size: clamp(20px, 2.2vw, 25px); font-weight: 600; margin-top: 14px; }
+.blog-head-actions { display: flex; align-items: center; gap: 9px; min-width: 0; }
+.learner-app .blog-answer-status { max-width: none; flex-shrink: 0; }
+.bookmark-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid var(--line); background: transparent; color: var(--muted); padding: 7px 10px; border-radius: 999px; font-size: 12px; cursor: pointer; flex-shrink: 0; }
+.bookmark-btn svg { width: 15px; height: 15px; }
+.bookmark-btn.is-bookmarked { color: var(--accent); background: var(--accent-soft); border-color: var(--accent); }
+.paged-question-tools { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.learner-app .option { border-radius: 14px; padding: 15px; transition: border-color .16s, background .16s; }
+.learner-app .option.selected { border-color: var(--accent); background: var(--accent-soft); }
+.learner-app .option.checked.correct { border-color: var(--good); background: color-mix(in srgb, var(--good) 9%, var(--surface)); }
+.learner-app .option.checked.wrong { border-color: var(--bad); background: color-mix(in srgb, var(--bad) 9%, var(--surface)); }
+.learner-app #modal { z-index: 100; }
+.learner-app .slotWrap { background: var(--surface); margin-top: 16px; }
+.learner-app .slot.flagged::after { content: ""; position: absolute; width: 6px; height: 6px; border-radius: 50%; top: 4px; right: 4px; background: var(--accent); }
+.learner-app .slot { position: relative; }
+.learner-app #quiz .quiz-footer { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); width: min(960px, calc(100% - 40px)); z-index: 50; margin: 0; padding: 14px 18px 10px; display: flex; flex-wrap: wrap; flex-direction: row; gap: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 20px; box-shadow: 0 8px 40px rgba(20,35,25,.12); }
+.learner-app #quiz .quiz-footer .nav-actions { margin-left: auto; }
+.save-status { flex-basis: 100%; text-align: center; font-size: 11px; color: var(--muted); }
+.learner-app .chapter-result { padding: 16px; border: 1px solid var(--line); border-radius: 14px; }
+.chapter-results { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; text-align: left; margin: 24px 0; }
+.chapter-result b { display: block; font-size: 14px; font-weight: 600; }
+.chapter-result span { color: var(--muted); font-size: 13px; }
+.chapter-result-bar { height: 5px; border-radius: 99px; background: var(--surface-3); margin-top: 12px; overflow: hidden; }
+.chapter-result-bar span { display: block; height: 100%; background: var(--accent); }
+.result-encouragement { font-size: 14px; color: var(--muted); }
+.retry-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-bottom: 20px; }
+.question-map { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.map-help { font-size: 13px; color: var(--muted); }
+.map-question { text-align: left; padding: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--text); border-radius: 12px; cursor: pointer; min-width: 0; }
+.map-question b { display: block; font-weight: 600; }
+.map-question span { display: block; font-size: 11px; color: var(--muted); margin-top: 4px; overflow-wrap: anywhere; }
+.map-question.is-answered { background: var(--accent-soft); }
+.map-question.is-current { border-color: var(--accent); }
+.learner-app button:focus-visible, .learner-app a:focus-visible, .learner-app textarea:focus-visible, .learner-app select:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.learner-app [hidden], .learner-app .hidden { display: none !important; }
+@media (max-width: 760px) {
+  .learner-app .wrap { padding: 18px 14px 190px; }
+  .learner-app #home { padding: 22px 18px; }
+  .learner-app .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 24px; }
+  .learner-app .stat { display: block; text-align: center; }
+  .learner-app .stat { padding: 14px 8px; font-size: 11px; }
+  .learner-app .stat b { font-size: 24px; }
+  .learner-app #chapterGrid { grid-template-columns: 1fr; }
+  .section-heading { align-items: flex-start; flex-wrap: wrap; gap: 8px; }
+  .learner-app .section-heading h2 { font-size: 19px; }
+  .study-mode-picker { grid-template-columns: 1fr; gap: 8px; }
+  .mode-card { padding: 14px; }
+  .resume-card { flex-direction: column; align-items: stretch; padding: 18px; }
+  .resume-actions { flex-direction: row; flex-wrap: wrap; }
+  .learner-app .quiz-topbar { padding: 15px 14px 12px; top: 8px; border-radius: 16px; }
+  .learner-app .quiz-chapter-title { font-size: 15px; }
+  .learner-app .quiz-progress-box strong { font-size: 15px; }
+  .learner-app .quiz-meta-row { gap: 12px; }
+  .session-toolbar { gap: 6px; margin-top: 10px; }
+  .progress-chip { padding: 4px 8px; font-size: 11px; }
+  .text-action { margin-left: 0; font-size: 11px; }
+  .learner-app .blog-question-card, .learner-app .question-card { padding: 20px 16px; border-radius: 18px; }
+  .learner-app .blog-question-head { align-items: center; gap: 8px; }
+  .blog-head-actions { gap: 6px; }
+  .blog-head-actions .bookmark-btn { padding: 7px; }
+  .blog-head-actions .bookmark-btn span { display: none; }
+  .learner-app .blog-question-card { scroll-margin-top: 185px; }
+  .learner-app #quiz .quiz-footer { bottom: 10px; width: calc(100% - 24px); padding: 12px 12px 9px; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 7px; border-radius: 16px; }
+  .learner-app #quiz .quiz-footer .nav-actions { width: auto; margin-left: 0; gap: 7px; }
+  .learner-app #quiz.blog-mode .quiz-footer .nav-actions { display: block; }
+  .learner-app #quiz .quiz-footer .btn { padding: 9px 10px; font-size: 12px; min-height: 42px; }
+  .learner-app #quiz .quiz-footer #quit { align-self: start; }
+  .learner-app #quiz .quiz-footer #quit svg { display: none; }
+  .save-status { grid-column: 1 / -1; font-size: 10px; }
+  .chapter-results { grid-template-columns: 1fr; }
+  .retry-actions .btn { width: 100%; }
+  .question-map { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .learner-app *, .learner-app *::before, .learner-app *::after { scroll-behavior: auto !important; transition: none !important; }
+}
