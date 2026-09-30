@@ -59,7 +59,6 @@
         </div>
       </div>
       <section class="panel" id="home">
-        <div class="home-intro"><span class="eyebrow">พื้นที่ทบทวนของคุณ</span><h2>เรียนทีละนิด เข้าใจมากขึ้น</h2><p>เลือกบทที่อยากทบทวน แล้วเริ่มในจังหวะของคุณ</p></div>
         <div class="stats">
           <div class="stat">
             <b id="totalAttempts">
@@ -80,12 +79,12 @@
             คะแนนเฉลี่ย
           </div>
         </div>
-        <div class="resume-card hidden" id="resumeCard"><div><span class="eyebrow">กลับมาทำต่อได้เสมอ</span><h3>คุณมีแบบทดสอบที่พักไว้</h3><p id="resumeDetail"></p></div><div class="resume-actions"><button class="btn primary" id="resumeQuiz">ทำต่อจากเดิม</button><button class="btn ghost" id="discardProgress">ลบชุดที่พักไว้</button></div></div>
-        <div class="section-heading"><div><h2>เลือกบทที่อยากทบทวน</h2><p>เลือกได้มากกว่า 1 บท</p></div><span class="selection-pill" id="selectionSummary"></span></div>
+        <div class="resume-card hidden" id="resumeCard"><div><h3>แบบทดสอบที่พักไว้</h3><p id="resumeDetail"></p></div><div class="resume-actions"><button class="btn primary" id="resumeQuiz">ทำต่อ</button><button class="btn ghost" id="discardProgress">ลบชุดที่พักไว้</button></div></div>
+        <div class="section-heading"><div><h2>เลือกบท</h2><p>เลือกได้มากกว่า 1 บท</p></div><span class="selection-pill" id="selectionSummary"></span></div>
         <div class="grid" id="chapterGrid">
         </div>
-        <div class="study-mode-picker" role="group" aria-label="รูปแบบการทำแบบทดสอบ"><button class="mode-card" id="practiceMode" aria-pressed="false"><span class="mode-icon" aria-hidden="true">◌</span><span><b>ฝึกเรียนรู้</b><small>ดูเฉลยทีละข้อ ทำได้ตามจังหวะของคุณ</small></span></button><button class="mode-card" id="examMode" aria-pressed="false"><span class="mode-icon" aria-hidden="true">◎</span><span><b>ลองสอบ</b><small>เก็บเฉลยไว้ตอนจบ ทดสอบความเข้าใจ</small></span></button></div>
-        <label class="exam-time hidden" id="examTimeWrap">เวลาสำหรับลองสอบ<select id="examMinutes"><option value="0">ไม่จำกัดเวลา</option><option value="10">10 นาที</option><option value="20">20 นาที</option><option value="30">30 นาที</option><option value="60">60 นาที</option></select><span>ถ้าหมดเวลา ระบบจะส่งคำตอบที่ทำไว้</span></label>
+        <div class="study-mode-picker" role="group" aria-label="รูปแบบการทำแบบทดสอบ"><button class="mode-card" id="practiceMode" aria-pressed="false"><span class="mode-icon" aria-hidden="true">◌</span><span><b>ฝึกทำ</b><small>ดูเฉลยทีละข้อ</small></span></button><button class="mode-card" id="examMode" aria-pressed="false"><span class="mode-icon" aria-hidden="true">◎</span><span><b>สอบ</b><small>ดูเฉลยหลังส่งคำตอบ</small></span></button></div>
+        <label class="exam-time hidden" id="examTimeWrap">เวลาสอบ<select id="examMinutes"><option value="0">ไม่จำกัดเวลา</option><option value="10">10 นาที</option><option value="20">20 นาที</option><option value="30">30 นาที</option><option value="60">60 นาที</option></select><span>ส่งคำตอบอัตโนมัติเมื่อหมดเวลา</span></label>
         <div class="home-actions">
           <div class="selection-actions">
             <button class="btn ghost" id="selectAll">
@@ -208,13 +207,13 @@
       </section>
       <section class="panel result hidden" id="result">
         <h2>
-          ทำ Quiz เสร็จแล้ว
+          ผลการทดสอบ
         </h2>
         <div class="score" id="resultScore">
         </div>
         <p id="resultDetail">
         </p>
-        <p class="result-encouragement" id="resultMessage"></p>
+        <p class="result-notice hidden" id="resultMessage"></p>
         <div id="chapterResults" class="chapter-results"></div>
         <div class="retry-actions"><button class="btn primary" id="retryWrong">ทบทวนข้อผิด</button><button class="btn" id="retryFlagged">ทบทวนข้อที่ปักหมุด</button></div>
         <div class="row result-actions">

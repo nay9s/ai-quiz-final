@@ -423,7 +423,7 @@ function updateBlogProgress() {
   const answered = session.answers.filter((answer) => answer?.selected != null).length;
   const checked = session.answers.filter((answer) => answer?.checked || answer?.revealed).length;
   const currentQuestion = session.questions[session.index] || session.questions[0];
-  $("#chapterCounter").textContent = session.revealBeforeNext ? "ฝึกเรียนรู้" : "ลองสอบ";
+  $("#chapterCounter").textContent = session.revealBeforeNext ? "ฝึกทำ" : "สอบ";
   $("#chapterLabel").textContent = currentQuestion ? currentQuestion.chapter : "คำถามทั้งหมด";
   $("#progressText").textContent = `ข้อ ${session.index + 1} / ${session.questions.length}`;
   $("#overallProgress").textContent = session.revealBeforeNext ? `ตรวจแล้ว ${checked} ข้อ` : "เฉลยหลังส่งคำตอบ";

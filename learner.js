@@ -108,7 +108,8 @@ function activateSession() {
         clearAutoAdvanceTimer();
         $("#modal").classList.add("hidden");
         finish();
-        $("#resultMessage").textContent = "ครบเวลาที่ตั้งไว้แล้ว บันทึกคำตอบที่ทำไว้และสรุปผลให้เรียบร้อย";
+        $("#resultMessage").textContent = "ครบเวลาสอบ ส่งคำตอบแล้ว";
+        $("#resultMessage").classList.remove("hidden");
       }
     };
     quizClockTimer = setInterval(tick, 1000);
@@ -166,7 +167,7 @@ function updateLearnerUI() {
   $("#sessionClock").classList.toggle("hidden", !session.deadline);
   $("#progressBar").style.width = `${answered / session.questions.length * 100}%`;
   $("#quiz .bar").setAttribute("aria-valuenow", String(Math.round(answered / session.questions.length * 100)));
-  $("#pagedModeLabel").textContent = session.revealBeforeNext ? "ฝึกเรียนรู้" : "ลองสอบ";
+  $("#pagedModeLabel").textContent = session.revealBeforeNext ? "ฝึกทำ" : "สอบ";
   const flag = $("#flagCurrent");
   flag.dataset.flagQuestion = session.index;
   flag.setAttribute("aria-pressed", String(Boolean(session.flags[session.index])));
@@ -213,7 +214,8 @@ function renderLearningResult() {
   $("#retryWrong").disabled = !wrong;
   $("#retryFlagged").textContent = `ทบทวนข้อที่ปักหมุด (${flagged})`;
   $("#retryFlagged").disabled = !flagged;
-  $("#resultMessage").textContent = !result.total ? "เก็บคำตอบไว้แล้ว ลองอ่านทบทวนสิ่งที่เขียนอีกครั้ง" : result.percent === 100 ? "ครบทุกข้อเลย! ลองทบทวนข้อที่ปักหมุดเพื่อให้มั่นใจยิ่งขึ้น" : "ทุกครั้งที่ทบทวนคือความก้าวหน้า ลองกลับไปทำข้อที่ยังไม่มั่นใจอีกครั้ง";
+  $("#resultMessage").textContent = "";
+  $("#resultMessage").classList.add("hidden");
   $("#chapterResults").innerHTML = result.chapters.map((chapter) => {
     const indices = result.questions.map((q, i) => q.chapter === chapter && q.type !== "open" ? i : -1).filter((i) => i >= 0);
     const correct = indices.filter((i) => result.answers[i]?.correct).length;
