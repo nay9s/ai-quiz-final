@@ -486,12 +486,6 @@
               "แยก configuration ของ AI (บุคลิก กฎ format) ออกจาก code ทำให้แก้ไขได้โดยไม่ต้องแตะ Python",
               "บีบอัด prompt ให้สั้นลงเพื่อลด token cost"
             ]
-          },
-          {
-            "id": "generative-ai-10",
-            "question": "นิสิตสามารถนำความรู้จากการเรียนเรื่อง Generative AI ไปประยุกต์ใช้กับอะไรได้บ้าง",
-            "options": [],
-            "type": "open"
           }
         ]
       },
