@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="th">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>จัดการ Quiz</title><link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="admin.css"></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>จัดการ Quiz</title><link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="admin.css"><link rel="stylesheet" href="web-dialog.css"></head>
 <body><main class="wrap admin-wrap">
   <div class="top"><div><h1>จัดการ Quiz</h1><p>แก้ข้อมูลผ่านฟอร์ม แล้วส่งออกไฟล์เพื่ออัปเดตเว็บไซต์</p></div><a class="btn" href="index.html">กลับไปทำ Quiz</a></div>
   <section class="panel admin-toolbar">
@@ -14,5 +14,5 @@
     <section class="panel"><h2>แก้ไขคำถาม</h2><div id="questionEditor"><label>รูปแบบคำถาม<select id="questionType"><option value="4">เลือกตอบ 4 ตัวเลือก (A–D)</option><option value="5">เลือกตอบ 5 ตัวเลือก (A–E)</option><option value="open">ปลายเปิด (ไม่คิดคะแนน)</option></select></label><label>ID คำถาม<input id="questionId" autocomplete="off"></label><label>คำถาม<textarea id="questionText" rows="4"></textarea></label><label>รูปภาพ (ไม่บังคับ)<input id="questionImage" placeholder="assets/example.png"></label><label>หมายเหตุ<textarea id="questionNote" rows="2"></textarea></label><div id="optionFields"></div><label>คำตอบที่ถูก<select id="correctAnswer"><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option></select></label></div><p id="emptyQuestion" hidden>เพิ่มคำถามเพื่อเริ่มแก้ไข</p></section>
   </div>
   <section class="panel"><h2>ตรวจสอบและส่งออก</h2><div class="admin-actions"><button class="btn" id="previewJson">ตรวจสอบ / ดู JSON</button><label>รูปแบบไฟล์<select id="exportFormat"><option value="quiz-data.json">quiz-data.json — GitHub Pages (ไฟล์เดียว)</option><option value="questions.json">questions.json — ข้อมูลคำถาม</option><option value="answers.json">answers.json — ข้อมูลเฉลย</option><option value="questions-data.js">questions-data.js — เปิดจากไฟล์</option><option value="answers-data.js">answers-data.js — เปิดจากไฟล์</option></select></label><button class="btn primary" id="exportData">ดาวน์โหลด</button></div><p class="admin-help">ถ้าเปิด index.html จากเครื่องโดยตรง ให้ส่งออกและแทนที่ไฟล์ .js ทั้งสองไฟล์ หากต้องการสำเนา JSON แยก ให้ส่งออก questions.json และ answers.json เพิ่มเติม</p><textarea id="jsonPreview" rows="12" readonly aria-label="ตัวอย่าง JSON" placeholder="กดตรวจสอบ / ดู JSON"></textarea></section>
-</main><script src="questions-data.js"></script><script src="answers-data.js"></script><script src="quiz-data-tools.js"></script><script src="admin.js"></script></body>
+</main><script src="questions-data.js"></script><script src="answers-data.js"></script><script src="quiz-data-tools.js"></script><script src="web-dialog.js"></script><script src="admin.js"></script></body>
 </html>

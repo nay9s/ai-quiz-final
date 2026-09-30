@@ -51,7 +51,8 @@ function saveProgress() {
   };
   try { localStorage.setItem(progressKey, JSON.stringify(saved)); progressSaved = true; }
   catch { progressSaved = false; }
-  $("#saveStatus").textContent = progressSaved ? "บันทึกบนเครื่องแล้ว · กลับมาทำต่อได้" : "บันทึกบนเครื่องไม่ได้ · อย่าปิดหน้านี้ก่อนส่งคำตอบ";
+  $("#saveStatus").textContent = progressSaved ? "" : "บันทึกบนเครื่องไม่ได้ · อย่าปิดหน้านี้ก่อนส่งคำตอบ";
+  $("#saveStatus").classList.toggle("hidden", progressSaved);
 }
 
 function removeProgress() { try { localStorage.removeItem(progressKey); } catch {} }
@@ -77,6 +78,8 @@ function syncStudyModes() {
   $("#practiceMode").setAttribute("aria-pressed", String(quizSettings.revealBeforeNext));
   $("#examMode").setAttribute("aria-pressed", String(!quizSettings.revealBeforeNext));
   $("#examTimeWrap").classList.toggle("hidden", quizSettings.revealBeforeNext);
+  $("#modeHelp").textContent = quizSettings.revealBeforeNext ? "เลือกคำตอบแล้วเฉลยทันที" : "ดูเฉลยหลังส่งคำตอบ";
+  $("#examTimeHelp").classList.toggle("hidden", quizSettings.revealBeforeNext || $("#examMinutes").value === "0");
 }
 
 function chooseStudyMode(practice) {
@@ -132,7 +135,36 @@ function resumeQuiz() {
 
 function bookmarkHtml(index) {
   const flagged = Boolean(session.flags?.[index]);
-  return `<button class="bookmark-btn ${flagged ? "is-bookmarked" : ""}" data-flag-question="${index}" type="button" aria-pressed="${flagged}" aria-label="${flagged ? "ยกเลิกปักหมุด" : "ปักหมุด"}ข้อ ${index + 1}"><svg viewBox="0 0 24 24" fill="${flagged ? "currentColor" : "none"}" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M6 3h12v18l-6-4-6 4z"/></svg><span>${flagged ? "ปักหมุดแล้ว" : "ปักหมุด"}</span></button>`;
+  return `<button class="bookmark-btn ${flagged ? "is-bookmarked" : ""}" data-flag-question="${index}" type="button" aria-pressed="${flagged}" aria-label="${flagged ? "ยกเลิกปักหมุด" : "ปักหมุด"}ข้อ ${index + 1}" title="${flagged ? "ยกเลิกปักหมุด" : "ปักหมุด"}"><svg viewBox="0 0 24 24" fill="${flagged ? "currentColor" : "none"}" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M6 3h12v18l-6-4-6 4z"/></svg></button>`;
+}
+
+function answerIconHtml(index) {
+  if (!session.revealBeforeNext || session.questions[index].type === "open") return "";
+  const visible = isAnswerVisible(index);
+  const label = visible ? "ซ่อนเฉลย" : "ดูเฉลย";
+  const icon = visible
+    ? '<path d="m3 3 18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.9 5.2A11 11 0 0 1 12 5c6.5 0 10 7 10 7a18 18 0 0 1-3 3.8M6.2 6.2A20 20 0 0 0 2 12s3.5 7 10 7a12 12 0 0 0 5.8-1.8"/>'
+    : '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>';
+  return `<button class="answer-icon ${visible ? "is-visible" : ""}" data-answer-detail="${index}" type="button" aria-label="${label}ข้อ ${index + 1}" title="${label}" aria-pressed="${visible}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icon}</svg></button>`;
+}
+
+function isAnswerVisible(index) {
+  const answer = session.answers[index] || {};
+  return session.revealBeforeNext && (answer.showAnswer ?? Boolean(answer.checked || answer.revealed));
+}
+
+function bindAnswerDetails() {
+  $$('[data-answer-detail]').forEach((button) => {
+    button.onclick = () => {
+      const index = Number(button.dataset.answerDetail);
+      if (!session?.revealBeforeNext || session.result || session.questions[index]?.type === "open") return;
+      clearAutoAdvanceTimer();
+      session.answers[index] = { ...(session.answers[index] || { selected: null }), showAnswer: !isAnswerVisible(index) };
+      if (session.displayMode === "blog") renderBlogQuestions({ preserveScroll: true });
+      else renderPagedQuestion();
+      $(`[data-answer-detail="${index}"]`)?.focus({ preventScroll: true });
+    };
+  });
 }
 
 function toggleBookmark(index) {
@@ -142,6 +174,7 @@ function toggleBookmark(index) {
     button.innerHTML = bookmarkHtml(index).match(/<button[^>]*>([\s\S]*)<\/button>/)[1];
     button.setAttribute("aria-pressed", String(session.flags[index]));
     button.setAttribute("aria-label", `${session.flags[index] ? "ยกเลิกปักหมุด" : "ปักหมุด"}ข้อ ${index + 1}`);
+    button.title = session.flags[index] ? "ยกเลิกปักหมุด" : "ปักหมุด";
     button.classList.toggle("is-bookmarked", session.flags[index]);
   });
   bindBookmarks();
@@ -159,10 +192,12 @@ function updateLearnerUI() {
   const answered = session.answers.filter((a) => a?.selected != null).length;
   const remaining = session.questions.length - answered;
   const flagged = session.flags.filter(Boolean).length;
-  $("#sessionAnswered").textContent = `ตอบแล้ว ${answered}/${session.questions.length}`;
-  $("#remainingCount").textContent = `ยังไม่ตอบ ${remaining}`;
+  $("#remainingCount").textContent = `${answered}/${session.questions.length}`;
+  $("#remainingCount").setAttribute("aria-label", `ตอบแล้ว ${answered} จาก ${session.questions.length} ข้อ${remaining ? " ไปข้อที่ยังไม่ตอบ" : ""}`);
   $("#remainingCount").disabled = !remaining;
-  $("#flaggedCount").textContent = `ปักหมุด ${flagged}`;
+  $("#flaggedNumber").textContent = flagged;
+  $("#flaggedCount").setAttribute("aria-label", `ดูข้อที่ปักหมุด ${flagged} ข้อ`);
+  $("#flaggedCount").title = `ข้อที่ปักหมุด ${flagged} ข้อ`;
   $("#flaggedCount").disabled = !flagged;
   $("#sessionClock").classList.toggle("hidden", !session.deadline);
   $("#progressBar").style.width = `${answered / session.questions.length * 100}%`;
@@ -171,6 +206,8 @@ function updateLearnerUI() {
   const flag = $("#flagCurrent");
   flag.dataset.flagQuestion = session.index;
   flag.setAttribute("aria-pressed", String(Boolean(session.flags[session.index])));
+  flag.setAttribute("aria-label", `${session.flags[session.index] ? "ยกเลิกปักหมุด" : "ปักหมุด"}ข้อ ${session.index + 1}`);
+  flag.title = session.flags[session.index] ? "ยกเลิกปักหมุด" : "ปักหมุด";
   flag.classList.toggle("is-bookmarked", Boolean(session.flags[session.index]));
   flag.innerHTML = bookmarkHtml(session.index).match(/<button[^>]*>([\s\S]*)<\/button>/)[1];
   bindBookmarks();
@@ -196,11 +233,11 @@ function observeBlogPosition() {
   const active = session;
   const observer = new IntersectionObserver((entries) => {
     if (session !== active || session.result || observer !== blogPositionObserver || $("#quiz").classList.contains("hidden")) return;
-    const entry = entries.filter((item) => item.isIntersecting).sort((a, b) => Math.abs(a.boundingClientRect.top - 160) - Math.abs(b.boundingClientRect.top - 160))[0];
+    const entry = entries.filter((item) => item.isIntersecting).sort((a, b) => Math.abs(a.boundingClientRect.top - 24) - Math.abs(b.boundingClientRect.top - 24))[0];
     if (!entry) return;
     const index = Number(entry.target.dataset.blogCard);
     if (index !== session.index) { session.index = index; updateBlogProgress(); renderChapterTabs(); saveProgress(); }
-  }, { rootMargin: "-150px 0px -45% 0px", threshold: 0 });
+  }, { rootMargin: "-24px 0px -45% 0px", threshold: 0 });
   blogPositionObserver = observer;
   $$('[data-blog-card]').forEach((card) => observer.observe(card));
 }
@@ -236,8 +273,12 @@ function retryQuestions(flaggedOnly = false) {
 }
 
 function initLearner() {
+  const questionNav = $("#quiz .slotWrap");
+  if (window.ResizeObserver) new ResizeObserver(updateQuestionNavHeight).observe(questionNav);
+  else window.addEventListener("resize", updateQuestionNavHeight);
+  $("#examMinutes").onchange = syncStudyModes;
   $("#resumeQuiz").onclick = resumeQuiz;
-  $("#discardProgress").onclick = () => { if (confirm("ลบคำตอบของชุดที่พักไว้และเริ่มใหม่?")) { removeProgress(); renderResumeCard(); } };
+  $("#discardProgress").onclick = async () => { if (await webConfirm("ลบคำตอบของชุดที่พักไว้และเริ่มใหม่?", "ลบชุดที่พักไว้")) { removeProgress(); renderResumeCard(); } };
   $("#practiceMode").onclick = () => chooseStudyMode(true);
   $("#examMode").onclick = () => chooseStudyMode(false);
   $("#remainingCount").onclick = goToUnanswered;
@@ -246,9 +287,6 @@ function initLearner() {
   $("#retryWrong").onclick = () => retryQuestions(false);
   $("#retryFlagged").onclick = () => retryQuestions(true);
   window.addEventListener("pagehide", saveProgress);
-  window.addEventListener("beforeunload", (event) => {
-    if (session && !session.result && !progressSaved) { event.preventDefault(); event.returnValue = ""; }
-  });
   document.addEventListener("visibilitychange", () => { if (document.hidden) saveProgress(); });
   document.addEventListener("keydown", (event) => {
     if (event.key !== "Tab" || $("#modal").classList.contains("hidden")) return;
@@ -259,4 +297,9 @@ function initLearner() {
     else if (!event.shiftKey && (document.activeElement === last || !$("#modal").contains(document.activeElement))) { event.preventDefault(); first.focus(); }
   });
   syncStudyModes();
+}
+
+function updateQuestionNavHeight() {
+  const height = $("#quiz .slotWrap").getBoundingClientRect().height;
+  if (height) document.documentElement.style.setProperty("--question-nav-height", `${height}px`);
 }

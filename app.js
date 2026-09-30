@@ -38,7 +38,7 @@ function saveStats(item) {
   const list = stats();
   list.unshift(item);
   try { localStorage.setItem("aiQuizStats", JSON.stringify(list.slice(0, 100))); }
-  catch { alert("แสดงคะแนนได้ แต่บันทึกประวัติไม่ได้ กรุณาตรวจสอบพื้นที่หรือสิทธิ์ของเบราว์เซอร์"); }
+  catch { webAlert("แสดงคะแนนได้ แต่บันทึกประวัติไม่ได้ กรุณาตรวจสอบพื้นที่หรือสิทธิ์ของเบราว์เซอร์"); }
   renderStats();
 }
 
@@ -161,13 +161,6 @@ function saveQuizSettings(nextSettings) {
 
 function renderSettingsSummary() {
   syncStudyModes();
-  const orderText = quizSettings.order === "shuffle" ? "สลับข้อ" : "เรียงทีละบท";
-  const displayText = quizSettings.displayMode === "blog" ? "เลื่อนต่อเนื่อง" : "ทีละข้อ";
-  const optionSuffix = quizSettings.shuffleOptions ? " · สลับตัวเลือก" : "";
-  const answerSuffix = quizSettings.revealBeforeNext ? " · เฉลยทีละข้อ" : " · เฉลยท้ายชุด";
-  const autoSuffix = quizSettings.autoAdvance ? " · ไปข้อต่อไปอัตโนมัติ" : "";
-  const target = $("#settingsSummary span");
-  if (target) target.textContent = `${displayText} · ${orderText}${optionSuffix}${answerSuffix}${autoSuffix}`;
 }
 
 function openQuizSettings() {
@@ -195,21 +188,17 @@ function openQuizSettings() {
       </div>
     </div>
     <div class="setting-card"><label class="switch-row"><span class="switch-copy"><b>สลับตัวเลือก</b><small>สลับตำแหน่งคำตอบใหม่ทุกครั้งที่เริ่ม Quiz</small></span><span class="switch-control"><input id="modalShuffleOptions" type="checkbox" ${quizSettings.shuffleOptions ? "checked" : ""}><span class="switch-ui"></span></span></label></div>
-    <div class="setting-card"><label class="switch-row"><span class="switch-copy"><b>เฉลยก่อนข้อถัดไป</b><small>เปิดเพื่อดูถูก–ผิดทีละข้อ ปิดเพื่อดูเฉลยทั้งหมดหลังสรุปคะแนน</small></span><span class="switch-control"><input id="modalRevealBeforeNext" type="checkbox" ${quizSettings.revealBeforeNext ? "checked" : ""}><span class="switch-ui"></span></span></label></div>
     <div class="setting-card"><label class="switch-row"><span class="switch-copy"><b>ข้อถัดไปอัตโนมัติ</b><small>หลังเลือกคำตอบ โหมดทีละข้อจะไปข้อถัดไป ส่วนโหมด Blog จะเลื่อนไปยังคำถามถัดไป</small></span><span class="switch-control"><input id="modalAutoAdvance" type="checkbox" ${quizSettings.autoAdvance ? "checked" : ""}><span class="switch-ui"></span></span></label></div>
-    <div class="settings-actions"><button class="btn" id="cancelSettings" type="button">ยกเลิก</button><button class="btn primary" id="saveSettings" type="button">บันทึกการตั้งค่า</button></div>
   </div>`);
-  $("#cancelSettings").onclick = closeQuizModal;
-  $("#saveSettings").onclick = () => {
+  $$("#modal .settings-panel input").forEach((input) => { input.onchange = () => {
     saveQuizSettings({
       displayMode: $('input[name="modalDisplayMode"]:checked')?.value || "blog",
       order: $('input[name="modalOrder"]:checked')?.value || "ordered",
       shuffleOptions: $("#modalShuffleOptions").checked,
-      revealBeforeNext: $("#modalRevealBeforeNext").checked,
+      revealBeforeNext: quizSettings.revealBeforeNext,
       autoAdvance: $("#modalAutoAdvance").checked
     });
-    closeQuizModal();
-  };
+  }; });
 }
 function init() {
   let theme = "light";
@@ -221,10 +210,10 @@ function init() {
   loadData();
 }
 
-function start() {
+async function start() {
   const ids = $$("#chapterGrid input:checked").map((input) => input.value);
-  if (!ids.length) { alert("กรุณาเลือกอย่างน้อย 1 บท"); return; }
-  if (readProgress() && !confirm("เริ่มชุดใหม่และแทนที่แบบทดสอบที่พักไว้?")) return;
+  if (!ids.length) { webAlert("กรุณาเลือกอย่างน้อย 1 บท"); return; }
+  if (readProgress() && !await webConfirm("เริ่มชุดใหม่และแทนที่แบบทดสอบที่พักไว้?", "เริ่มชุดใหม่")) return;
   clearAutoAdvanceTimer();
   const selectedChapters = CHAPTERS.filter((chapter) => ids.includes(chapter.id));
   const ordered = quizSettings.order === "ordered";
@@ -316,10 +305,6 @@ function renderChapterTabs() {
 function renderSlots() {
   if (!session) return;
   const indices = visibleIndices();
-  const answered = indices.filter((index) => session.answers[index]?.selected != null).length;
-  $("#slotHeading").textContent = session.orderedByChapter ? "ข้อในบทนี้" : "ข้อทั้งหมดแบบสลับ";
-  $("#slotMeta").textContent = session.orderedByChapter ? "กดเลขข้อเพื่อข้ามหรือย้อนกลับมาแก้" : "เลื่อนซ้าย–ขวาเพื่อเลือกข้อที่ต้องการ";
-  $("#answeredCount").textContent = `ตอบแล้ว ${answered}/${indices.length}`;
   $("#slots").innerHTML = indices.map((index, position) => {
     const answer = session.answers[index];
     const question = session.questions[index];
@@ -332,6 +317,7 @@ function renderSlots() {
     return `<button class="${className}" data-i="${index}" title="ไปข้อ ${label}" aria-label="ไปข้อ ${label}">${label}</button>`;
   }).join("");
   $$(".slot").forEach((button) => button.onclick = () => goTo(Number(button.dataset.i)));
+  updateQuestionNavHeight();
   requestAnimationFrame(() => {
     const box = $("#slots");
     const current = box.querySelector(".current");
@@ -392,7 +378,8 @@ function blogAnswerStatus(answerState) {
 function blogQuestionHtml(question, index) {
   const answerState = session.answers[index] || {};
   const isChecked = Boolean(answerState.checked || answerState.revealed);
-  const status = blogAnswerStatus(answerState);
+  const showAnswer = isAnswerVisible(index);
+  const status = blogAnswerStatus(showAnswer ? answerState : { ...answerState, checked: false, revealed: false });
   const previous = session.questions[index - 1];
   const chapterDivider = session.orderedByChapter && session.chapterOrder.length > 1 && (!previous || previous.chapter !== question.chapter)
     ? `<div class="blog-chapter-divider" id="blog-chapter-${escapeHtml(question.chapterId)}"><span>บทที่ ${session.chapterOrder.indexOf(question.chapter) + 1}</span><h2>${escapeHtml(question.chapter)}</h2></div>`
@@ -400,40 +387,29 @@ function blogQuestionHtml(question, index) {
   const image = question.image ? `<img class="qimg" src="${escapeHtml(question.image)}" alt="ภาพประกอบคำถาม">` : "";
   const options = question.options.map((option, optionIndex) => {
     const selected = answerState.selected === optionIndex;
-    const correct = isChecked && optionIndex === question.answer;
-    const wrong = isChecked && selected && optionIndex !== question.answer;
-    return `<label class="option ${selected ? "selected" : ""} ${isChecked ? "checked" : ""} ${correct ? "correct" : ""} ${wrong ? "wrong" : ""}" data-blog-question="${index}" data-blog-option="${optionIndex}"><input type="radio" name="blog-answer-${index}" value="${optionIndex}" ${selected ? "checked" : ""} ${isChecked ? "disabled" : ""}><span class="optionKey">${String.fromCharCode(65 + optionIndex)}</span><span class="optionText">${escapeHtml(option)}</span><span class="optionMark" aria-hidden="true"></span></label>`;
+    const correct = showAnswer && optionIndex === question.answer;
+    const wrong = showAnswer && selected && optionIndex !== question.answer;
+    return `<label class="option ${selected ? "selected" : ""} ${showAnswer ? "checked" : ""} ${correct ? "correct" : ""} ${wrong ? "wrong" : ""}" data-blog-question="${index}" data-blog-option="${optionIndex}"><input type="radio" name="blog-answer-${index}" value="${optionIndex}" ${selected ? "checked" : ""} ${isChecked || showAnswer ? "disabled" : ""}><span class="optionKey">${String.fromCharCode(65 + optionIndex)}</span><span class="optionText">${escapeHtml(option)}</span><span class="optionMark" aria-hidden="true"></span></label>`;
   }).join("");
-  const actions = session.revealBeforeNext && question.type !== "open"
-    ? `<div class="blog-card-actions"><button class="btn ghost" type="button" data-blog-reveal="${index}" ${isChecked ? "disabled" : ""}>${isChecked ? "เฉลยแล้ว" : "ดูเฉลย"}</button><button class="btn primary" type="button" data-blog-check="${index}" ${answerState.selected == null || isChecked ? "disabled" : ""}>${isChecked ? "ตรวจแล้ว" : "ตรวจคำตอบ"}</button></div>`
-    : "";
   return `${chapterDivider}<article class="blog-question-card" id="blog-question-${index}" data-blog-card="${index}">
-    <div class="blog-question-head"><span class="question-kicker">คำถาม ${String(session.orderedByChapter ? question.sourceNo : index + 1).padStart(2, "0")}</span><div class="blog-head-actions">${bookmarkHtml(index)}<span class="blog-answer-status ${status.className}">${status.label}</span></div></div>
+    <div class="blog-question-head"><span class="question-kicker">คำถาม ${String(session.orderedByChapter ? question.sourceNo : index + 1).padStart(2, "0")}</span><div class="blog-head-actions">${answerIconHtml(index)}${bookmarkHtml(index)}<span class="blog-answer-status ${status.className}">${status.label}</span></div></div>
     ${session.chapterOrder.length > 1 ? `<div class="blog-question-source">${escapeHtml(question.chapter)}</div>` : ""}
     ${image}
     <h3 class="blog-question-title">${escapeHtml(question.question)}</h3>
     ${question.note ? `<p class="question-note">${escapeHtml(question.note)}</p>` : ""}
     <div class="options blog-options">${question.type === "open" ? openResponseHtml(question, index) : options}</div>
-    ${actions}
   </article>`;
 }
 
 function updateBlogProgress() {
   if (!session) return;
-  const answered = session.answers.filter((answer) => answer?.selected != null).length;
-  const checked = session.answers.filter((answer) => answer?.checked || answer?.revealed).length;
-  const currentQuestion = session.questions[session.index] || session.questions[0];
-  $("#chapterCounter").textContent = session.revealBeforeNext ? "ฝึกทำ" : "สอบ";
-  $("#chapterLabel").textContent = currentQuestion ? currentQuestion.chapter : "คำถามทั้งหมด";
-  $("#progressText").textContent = `ข้อ ${session.index + 1} / ${session.questions.length}`;
-  $("#overallProgress").textContent = session.revealBeforeNext ? `ตรวจแล้ว ${checked} ข้อ` : "เฉลยหลังส่งคำตอบ";
-  $("#progressBar").style.width = `${(answered / session.questions.length) * 100}%`;
   $("#next").dataset.mode = "submit";
   $("#next").innerHTML = `ส่งคำตอบ${icons.check}`;
   updateLearnerUI();
 }
 
 function bindBlogEvents() {
+  bindAnswerDetails();
   bindOpenResponses();
   $$('#blogQuestions input[type="radio"]').forEach((input) => {
     input.onchange = () => {
@@ -450,12 +426,6 @@ function bindBlogEvents() {
       toggleOptionAt(index, option);
       if (event.detail === 0) requestAnimationFrame(() => $(`#blog-question-${index} input[value="${option}"]`)?.focus({ preventScroll: true }));
     };
-  });
-  $$('[data-blog-check]').forEach((button) => {
-    button.onclick = () => checkAnswerAt(Number(button.dataset.blogCheck), false);
-  });
-  $$('[data-blog-reveal]').forEach((button) => {
-    button.onclick = () => checkAnswerAt(Number(button.dataset.blogReveal), true);
   });
 }
 
@@ -509,15 +479,6 @@ function renderPagedQuestion() {
   if (!session) return;
   const question = session.questions[session.index];
   const answerState = session.answers[session.index] || {};
-  const indices = visibleIndices();
-  const localPosition = indices.indexOf(session.index) + 1;
-  const chapterPosition = Math.max(0, session.chapterOrder.indexOf(question.chapter)) + 1;
-
-  $("#chapterCounter").textContent = session.orderedByChapter ? (session.chapterOrder.length > 1 ? `บท ${chapterPosition} จาก ${session.chapterOrder.length}` : "บทที่เลือก") : "โหมดสลับข้อ";
-  $("#progressText").textContent = session.orderedByChapter ? `ข้อ ${localPosition} / ${indices.length}` : `ข้อ ${session.index + 1} / ${session.questions.length}`;
-  $("#overallProgress").textContent = session.orderedByChapter && session.questions.length !== indices.length ? `ความคืบหน้ารวม ${session.index + 1}/${session.questions.length}` : `ตอบแล้ว ${session.answers.filter((item) => item?.selected != null).length}/${session.questions.length}`;
-  $("#progressBar").style.width = `${(session.orderedByChapter ? localPosition / indices.length : (session.index + 1) / session.questions.length) * 100}%`;
-  $("#chapterLabel").textContent = question.chapter;
   $("#questionKicker").textContent = `คำถาม ${String(session.orderedByChapter ? question.sourceNo : session.index + 1).padStart(2, "0")}`;
   $("#qtitle").textContent = question.question;
   $("#prev").disabled = session.index === 0;
@@ -534,15 +495,14 @@ function renderPagedQuestion() {
   }
 
   const isChecked = Boolean(answerState.checked || answerState.revealed);
-  const showAnswerButton = $("#showAnswer");
-  showAnswerButton.classList.toggle("hidden", !session.revealBeforeNext || question.type === "open");
-  showAnswerButton.disabled = isChecked;
-  showAnswerButton.textContent = isChecked ? "เฉลยแล้ว" : "ดูเฉลย";
+  const showAnswer = isAnswerVisible(session.index);
+  $("#pagedAnswerIcon").innerHTML = answerIconHtml(session.index);
+  bindAnswerDetails();
   $("#options").innerHTML = question.options.map((option, index) => {
     const selected = answerState.selected === index;
-    const correct = isChecked && index === question.answer;
-    const wrong = isChecked && selected && index !== question.answer;
-    return `<label class="option ${selected ? "selected" : ""} ${isChecked ? "checked" : ""} ${correct ? "correct" : ""} ${wrong ? "wrong" : ""}" data-i="${index}"><input type="radio" name="answer" value="${index}" ${selected ? "checked" : ""} ${isChecked ? "disabled" : ""}><span class="optionKey">${String.fromCharCode(65 + index)}</span><span class="optionText">${escapeHtml(option)}</span><span class="optionMark" aria-hidden="true"></span></label>`;
+    const correct = showAnswer && index === question.answer;
+    const wrong = showAnswer && selected && index !== question.answer;
+    return `<label class="option ${selected ? "selected" : ""} ${showAnswer ? "checked" : ""} ${correct ? "correct" : ""} ${wrong ? "wrong" : ""}" data-i="${index}"><input type="radio" name="answer" value="${index}" ${selected ? "checked" : ""} ${isChecked || showAnswer ? "disabled" : ""}><span class="optionKey">${String.fromCharCode(65 + index)}</span><span class="optionText">${escapeHtml(option)}</span><span class="optionMark" aria-hidden="true"></span></label>`;
   }).join("");
 
   if (question.type === "open") $("#options").innerHTML = openResponseHtml(question, session.index);
@@ -600,16 +560,21 @@ function toggleOptionAt(questionIndex, optionIndex) {
   if (!session) return;
   clearAutoAdvanceTimer();
   const current = session.answers[questionIndex] || {};
-  if (current.checked || current.revealed) return;
+  if (current.checked || current.revealed || isAnswerVisible(questionIndex)) return;
   const selected = current.selected === optionIndex ? null : optionIndex;
   session.index = questionIndex;
   session.answers[questionIndex] = { selected, checked: false, revealed: false, correct: false };
+
+  if (selected != null && session.revealBeforeNext) {
+    checkAnswerAt(questionIndex, false);
+    queueAutoAdvance(questionIndex);
+    return;
+  }
 
   if (session.displayMode === "blog") renderBlogQuestions({ preserveScroll: true });
   else renderPagedQuestion();
 
   if (selected == null || !session.autoAdvance) return;
-  if (session.revealBeforeNext) checkAnswerAt(questionIndex, false);
   queueAutoAdvance(questionIndex);
 }
 
@@ -624,6 +589,7 @@ function checkAnswerAt(questionIndex, revealOnly = false) {
     ...current,
     checked: true,
     revealed: revealOnly,
+    showAnswer: true,
     correct: current.selected === question.answer
   };
 
@@ -635,22 +601,26 @@ function checkAnswerAt(questionIndex, revealOnly = false) {
 function checkCurrentAnswer(revealOnly = false) {
   return checkAnswerAt(session.index, revealOnly);
 }
-function advanceOrFinish() {
+async function advanceOrFinish() {
+  const active = session;
   if (session.index < session.questions.length - 1) {
     session.index += 1;
     renderQuestion();
     return;
   }
   const unanswered = session.answers.filter((answer) => !answer || answer.selected == null).length;
-  if (unanswered && !confirm(`ยังไม่ได้ตอบ ${unanswered} ข้อ ต้องการส่งคำตอบเลยหรือไม่?`)) return;
+  if (unanswered && !await webConfirm(`ยังไม่ได้ตอบ ${unanswered} ข้อ ต้องการส่งคำตอบเลยหรือไม่?`, "ส่งคำตอบ")) return;
+  if (session !== active || session.result) return;
   finish();
 }
 
-function handleNext() {
+async function handleNext() {
   clearAutoAdvanceTimer();
+  const active = session;
   if (session.displayMode === "blog") {
     const unanswered = session.answers.filter((answer) => !answer || answer.selected == null).length;
-    if (unanswered && !confirm(`ยังไม่ได้ตอบ ${unanswered} ข้อ ต้องการส่งคำตอบเลยหรือไม่?`)) return;
+    if (unanswered && !await webConfirm(`ยังไม่ได้ตอบ ${unanswered} ข้อ ต้องการส่งคำตอบเลยหรือไม่?`, "ส่งคำตอบ")) return;
+    if (session !== active || session.result) return;
     finish();
     return;
   }
@@ -717,7 +687,7 @@ function exitQuiz() {
   clearAutoAdvanceTimer();
   if (!session) { show("home"); return; }
   saveProgress();
-  if (!progressSaved) { alert("บันทึกความคืบหน้าไม่ได้ กรุณาทำต่อและส่งคำตอบก่อนออก เพื่อไม่ให้คำตอบหาย"); return; }
+  if (!progressSaved) { webAlert("บันทึกความคืบหน้าไม่ได้ กรุณาทำต่อและส่งคำตอบก่อนออก เพื่อไม่ให้คำตอบหาย"); return; }
   stopSessionTracking();
   session = null;
   show("home");
@@ -812,7 +782,6 @@ $("#selectAll").onclick = () => { $$("#chapterGrid input").forEach((input) => in
 $("#clearAll").onclick = () => { $$("#chapterGrid input").forEach((input) => input.checked = false); updateHomeSelection(); };
 $("#prev").onclick = () => { if (session?.index > 0) goTo(session.index - 1); };
 $("#next").onclick = handleNext;
-$("#showAnswer").onclick = () => checkCurrentAnswer(true);
 $("#quit").onclick = exitQuiz;
 $("#backHome").onclick = () => { clearAutoAdvanceTimer(); session = null; show("home"); renderStats(); window.scrollTo({ top: 0, behavior: "smooth" }); };
 $("#reviewThis").onclick = () => openModal("เฉลยชุดล่าสุด", reviewHtml(session.result.questions, session.result.answers));

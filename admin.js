@@ -80,8 +80,8 @@ el("questionType").onchange = () => {
 el("correctAnswer").onchange = () => { data.answers.answers[question().id] = el("correctAnswer").value; changed(); };
 el("addChapter").onclick = () => { const c = { id: uniqueId("quiz", new Set(data.questions.chapters.map((item) => item.id))), title: "บทใหม่", questions: [] }; data.questions.chapters.push(c); chapterIndex = data.questions.chapters.length - 1; questionIndex = 0; addQuestionTo(c); changed(); render(); };
 el("addQuestion").onclick = () => { addQuestionTo(chapter()); questionIndex = chapter().questions.length - 1; changed(); render(); };
-el("deleteQuestion").onclick = () => { if (!question() || !confirm("ลบคำถามนี้จากฉบับร่าง?")) return; delete data.answers.answers[question().id]; chapter().questions.splice(questionIndex, 1); questionIndex = Math.max(0, questionIndex - 1); changed(); render(); };
-el("deleteChapter").onclick = () => { if (data.questions.chapters.length === 1) { status("ต้องเหลืออย่างน้อย 1 บท", true); return; } if (!confirm("ลบบทนี้และคำถามทั้งหมดจากฉบับร่าง?")) return; chapter().questions.forEach((q) => delete data.answers.answers[q.id]); data.questions.chapters.splice(chapterIndex, 1); chapterIndex = 0; questionIndex = 0; changed(); render(); };
+el("deleteQuestion").onclick = async () => { if (!question() || !await webConfirm("ลบคำถามนี้จากฉบับร่าง?", "ลบคำถาม")) return; delete data.answers.answers[question().id]; chapter().questions.splice(questionIndex, 1); questionIndex = Math.max(0, questionIndex - 1); changed(); render(); };
+el("deleteChapter").onclick = async () => { if (data.questions.chapters.length === 1) { status("ต้องเหลืออย่างน้อย 1 บท", true); return; } if (!await webConfirm("ลบบทนี้และคำถามทั้งหมดจากฉบับร่าง?", "ลบบท")) return; chapter().questions.forEach((q) => delete data.answers.answers[q.id]); data.questions.chapters.splice(chapterIndex, 1); chapterIndex = 0; questionIndex = 0; changed(); render(); };
 el("previewJson").onclick = () => guard(() => { el("jsonPreview").value = QuizData.serialize(data); status(`ข้อมูลผ่านการตรวจสอบ: ${data.questions.chapters.length} บท ${data.questions.chapters.reduce((sum, c) => sum + c.questions.length, 0)} ข้อ`); });
 el("exportData").onclick = () => guard(() => {
   const filename = el("exportFormat").value, content = output(filename);
@@ -98,24 +98,25 @@ el("importFiles").onchange = async () => {
     else if (parsed.length === 2) candidate = { questions: parsed.find((p) => Array.isArray(p.chapters)), answers: parsed.find((p) => p.answers && !p.questions) };
     else throw new Error("เลือก quiz-data.json 1 ไฟล์ หรือ questions.json และ answers.json 2 ไฟล์พร้อมกัน");
     QuizData.validate(candidate);
-    if (dirty && !confirm("นำเข้าข้อมูลแทนที่ฉบับร่างปัจจุบัน?")) return;
+    if (dirty && !await webConfirm("นำเข้าข้อมูลแทนที่ฉบับร่างปัจจุบัน?", "นำเข้า")) return;
     data = QuizData.copy(candidate); chapterIndex = questionIndex = 0; changed(); render();
   } catch (error) { status(`นำเข้าไม่สำเร็จ: ${error.message}`, true); }
   finally { el("importFiles").value = ""; }
 };
-el("restoreDraft").onclick = () => guard(() => {
-  if (dirty && !confirm("เปิดฉบับร่างที่บันทึกไว้แทนข้อมูลปัจจุบัน?")) return;
+el("restoreDraft").onclick = async () => {
+  if (dirty && !await webConfirm("เปิดฉบับร่างที่บันทึกไว้แทนข้อมูลปัจจุบัน?", "เปิดฉบับร่าง")) return;
+  guard(() => {
   const candidate = JSON.parse(localStorage.getItem(draftKey));
   // Drafts may contain incomplete questions; validate their structure before editing.
   if (!candidate?.questions?.chapters?.length || !candidate.answers?.answers || !candidate.questions.chapters.every((c) => typeof c.id === "string" && typeof c.title === "string" && Array.isArray(c.questions) && c.questions.every((q) => typeof q.id === "string" && typeof q.question === "string" && Array.isArray(q.options) && (q.type === "open" ? !q.options.length : [4, 5].includes(q.options.length))))) throw new Error("ฉบับร่างไม่ถูกต้อง กรุณานำเข้า JSON ใหม่");
   data = candidate; chapterIndex = questionIndex = 0; dirty = true; el("jsonPreview").value = ""; render(); status("เปิดฉบับร่างแล้ว — ตรวจสอบก่อนส่งออก");
-});
+  });
+};
 async function loadSource() {
   try { const source = await QuizData.load(); data = source; chapterIndex = questionIndex = 0; dirty = false; el("jsonPreview").value = ""; render(); status("โหลดข้อมูลเว็บไซต์แล้ว เลือกบทและคำถามเพื่อแก้ไข"); }
   catch (error) { status(error.message, true); }
 }
-el("reloadSource").onclick = () => { if (!dirty || confirm("ทิ้งการแก้ไขบนหน้าจอและโหลดข้อมูลเว็บใหม่?")) loadSource(); };
-window.addEventListener("beforeunload", (event) => { if (dirty) { event.preventDefault(); event.returnValue = ""; } });
+el("reloadSource").onclick = async () => { if (!dirty || await webConfirm("ทิ้งการแก้ไขบนหน้าจอและโหลดข้อมูลเว็บใหม่?", "โหลดใหม่")) loadSource(); };
 try { el("restoreDraft").disabled = !localStorage.getItem(draftKey); } catch {}
 // Keep edit controls disabled until a valid source has loaded.
 document.querySelectorAll("button,input,select,textarea").forEach((control) => { if (control.id !== "importFiles" && control.id !== "restoreDraft" && control.id !== "reloadSource") control.disabled = true; });

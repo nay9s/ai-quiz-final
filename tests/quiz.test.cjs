@@ -5,6 +5,12 @@ const http = require('node:http');
 const { chromium } = require('playwright');
 const root = path.resolve(__dirname, '..');
 
+async function acceptWebDialogs(page) {
+  const install = () => new MutationObserver(() => document.querySelector('#webDialog[open] #webDialogConfirm')?.click()).observe(document, {childList:true, subtree:true, attributes:true, attributeFilter:['open']});
+  await page.addInitScript(install);
+  await page.evaluate(install);
+}
+
 (async () => {
   const server = http.createServer(async (req, res) => {
     const filename = path.resolve(root, '.' + decodeURIComponent(new URL(req.url, 'http://localhost').pathname));
@@ -54,7 +60,7 @@ const root = path.resolve(__dirname, '..');
     await page.fill('#option0', 'Option 0');
     await page.setInputFiles('#importFiles', {name:'broken.json',mimeType:'application/json',buffer:Buffer.from('{}')});
     assert.match(await page.textContent('#adminStatus'), /นำเข้าไม่สำเร็จ/);
-    page.on('dialog', (dialog) => dialog.accept());
+    await acceptWebDialogs(page);
     await page.setInputFiles('#importFiles', {name:'quiz-data.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(bundle))});
     await page.waitForFunction(() => document.getElementById('chapterSelect').options.length === 7);
     await page.click('#previewJson'); assert.deepEqual(JSON.parse(await page.inputValue('#jsonPreview')), bundle);
@@ -64,7 +70,7 @@ const root = path.resolve(__dirname, '..');
     await page.waitForFunction(() => document.querySelectorAll('#chapterGrid input').length === 7);
     assert.match(await page.textContent('#chapterGrid'), /New quiz <test>/);
     assert.equal(await page.locator('#chapterGrid test').count(), 0);
-    await page.click('#clearAll'); await page.locator('#chapterGrid input').last().check(); await page.click('#start');
+    await page.click('#clearAll'); await page.locator('#chapterGrid input').last().check(); await page.click('#examMode'); await page.click('#start');
     const radios = page.locator('#blogQuestions input[type=radio]');
     await radios.first().focus(); await page.keyboard.press('ArrowRight');
     assert.equal(await page.evaluate(() => session.answers[0].selected), 1);
@@ -87,11 +93,11 @@ const root = path.resolve(__dirname, '..');
     // Direct file opening retains legacy JS loading.
     await mobile.goto('file:///' + root.replaceAll('\\', '/') + '/index.html');
     await mobile.waitForFunction(() => document.querySelectorAll('#chapterGrid input').length === 6);
-    await mobile.click('#openSettings'); await mobile.locator('.display-mode-segmented label').first().click(); await mobile.click('#saveSettings');
-    await mobile.click('#start'); await mobile.locator('#options input').first().focus();
+    await mobile.click('#openSettings'); await mobile.locator('.display-mode-segmented label').first().click(); await mobile.click('#closeModal');
+    await mobile.click('#examMode'); await mobile.click('#start'); await mobile.locator('#options input').first().focus();
     await mobile.keyboard.press('ArrowRight'); await mobile.waitForFunction(() => document.activeElement?.value === '1'); await mobile.keyboard.press('ArrowRight');
     assert.equal(await mobile.evaluate(() => session.answers[0].selected), 2);
-    const mixed = await browser.newPage(); mixed.on('dialog', (dialog) => dialog.accept());
+    const mixed = await browser.newPage(); await acceptWebDialogs(mixed);
     await mixed.goto(base + '/index.html'); await mixed.waitForFunction(() => document.querySelectorAll('#chapterGrid input').length === 6);
     await mixed.click('#selectAll'); await mixed.click('#start');
     assert.equal(await mixed.locator('[data-blog-card]').count(), 55);
@@ -117,7 +123,7 @@ const root = path.resolve(__dirname, '..');
     // Reload resets the intentionally changed in-memory dataset.
     await mixed.reload(); await mixed.waitForFunction(() => document.querySelectorAll('#chapterGrid input').length === 6);
     await mixed.click('#clearAll'); await mixed.locator('#chapterGrid input').nth(4).check();
-    await mixed.click('#openSettings'); await mixed.locator('.display-mode-segmented label').first().click(); await mixed.click('#saveSettings'); await mixed.click('#start');
+    await mixed.click('#openSettings'); await mixed.locator('.display-mode-segmented label').first().click(); await mixed.click('#closeModal'); await mixed.click('#start');
     await mixed.locator('.slot').last().click(); await mixed.locator('.question-card [data-open-question]').fill('ใช้ช่วยเขียนโปรแกรม');
     await mixed.click('#prev'); await mixed.locator('.slot').last().click();
     assert.equal(await mixed.locator('.question-card [data-open-question]').inputValue(), 'ใช้ช่วยเขียนโปรแกรม');

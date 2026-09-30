@@ -1,0 +1,55 @@
+const assert = require('node:assert/strict');
+const path = require('node:path');
+const { chromium } = require('playwright');
+const root = path.resolve(__dirname, '..');
+
+(async () => {
+  const browser = await chromium.launch({ channel: 'msedge', headless: true });
+  const page = await browser.newPage({ viewport: { width: 390, height: 700 } });
+  const errors = [];
+  const nativeDialogs = [];
+  page.on('pageerror', error => errors.push(error.message));
+  page.on('dialog', async dialog => { nativeDialogs.push(dialog.type()); await dialog.dismiss(); });
+  try {
+    await page.goto('file:///' + root.replaceAll('\\', '/') + '/index.html');
+    await page.waitForFunction(() => document.querySelectorAll('#chapterGrid input').length === 6);
+    await page.click('#examMode'); await page.click('#start');
+    await page.locator('[data-blog-option="0"]').first().click();
+    await page.click('#quit');
+    const saved = await page.evaluate(() => localStorage.getItem(progressKey));
+    await page.click('#start');
+    assert.equal(await page.locator('#webDialog').isVisible(), true);
+    await page.click('#webDialogCancel');
+    assert.equal(await page.locator('#home').isVisible(), true);
+    assert.equal(await page.evaluate(() => localStorage.getItem(progressKey)), saved);
+    await page.click('#discardProgress'); await page.keyboard.press('Escape');
+    assert.equal(await page.locator('#resumeCard').isVisible(), true);
+    await page.click('#start'); await page.click('#webDialogConfirm');
+    assert.equal(await page.evaluate(() => session.answers[0]), null);
+    await page.click('#next'); await page.click('#webDialogCancel');
+    assert.equal(await page.locator('#quiz').isVisible(), true);
+    await page.click('#next'); await page.click('#webDialogConfirm');
+    assert.equal(await page.locator('#result').isVisible(), true);
+    await page.click('#backHome');
+    await page.evaluate(() => saveQuizSettings({ ...quizSettings, displayMode: 'paged' }));
+    await page.click('#start');
+    assert.equal(await page.locator('.slotHeader').count(), 0);
+    await page.waitForFunction(() => scrollY === 0);
+    const nav = await page.locator('.slotWrap').boundingBox();
+    const card = await page.locator('.question-card').boundingBox();
+    assert.equal(nav.y, 6);
+    assert.ok(card.y > nav.y + nav.height);
+    assert.equal(await page.locator('.slot').count(), 9);
+    await page.evaluate(() => { Storage.prototype.setItem = () => { throw new Error('QuotaExceededError'); }; });
+    await page.locator('#options .option').first().click();
+    await page.click('#quit');
+    assert.equal(await page.locator('#webDialog').isVisible(), true);
+    assert.equal(await page.locator('#webDialogCancel').isVisible(), false);
+    await page.click('#webDialogConfirm');
+    assert.equal(await page.locator('#quiz').isVisible(), true);
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+    assert.deepEqual(nativeDialogs, []);
+    assert.deepEqual(errors, []);
+    console.log('PASS: in-page confirm/cancel/Escape, replacement, submit, save-failure notice, compact floating question numbers');
+  } finally { await browser.close(); }
+})().catch(error => { console.error(error); process.exitCode = 1; });
